@@ -71,6 +71,18 @@ public class MyThreadMain extends Thread {
 //The stop() method was originally used to forcefully terminate a thread.
 //However, it was deprecated in Java 1.2 because it is unsafe and can cause issues like resource leaks and inconsistent states.
 
+//synchronized method or block : means this method will acquire intrinsic lock of the object the method belongs to(means who called this synchronized method)
+
+//deadlock
+//lock ko acquire krne ki ordering consistent krde(ex. pehle pen lao then get go for paper; by introducing synchronized block with pen as arg in thread 2 task) then we can resolve deadlock
+
+//ThreadCommunicaion
+//notify(),notifyAll(),wait() these methods were introduced for thread communication
+//these methods are called within synchronized context
+//wait() method : tells to current thread that release the lock and wait until another thread call notify or notifyAll()
+//notify() and notifyAll() wakes up single and all waiting threads
+
+
 //🔹 What is interrupt()?
 //interrupt() does not stop a thread immediately.
 //It sends a signal to the thread that it should stop.
@@ -257,6 +269,124 @@ public class MyThreadMain extends Thread {
 //🚀 Use Unfair Lock for better speed.
 
 
+
+
+//Absolutely! Let’s break down the lifecycle of a thread in Java and understand when the thread scheduler and CPU scheduler come into play. This will help you visualize how threads are managed and executed.
+//
+//Lifecycle of a Thread
+//A thread in Java goes through several states during its lifecycle. These states are defined in the Thread.State enum. Here’s a step-by-step explanation of what happens:
+//
+//1. NEW State
+//When you create a thread object using new Thread(), the thread is in the NEW state.
+//
+//At this point, the thread has been created but not yet started. It is just an object in memory.
+//
+//Example:
+//
+//java
+//Copy
+//Thread t1 = new Thread(() -> System.out.println("Thread running"));
+//// t1 is in the NEW state
+//2. RUNNABLE State
+//When you call t1.start(), the thread transitions to the RUNNABLE state.
+//
+//In this state:
+//
+//The thread is eligible to run, but it may or may not be executing.
+//
+//The thread is added to the thread scheduler's ready queue, waiting for CPU time.
+//
+//The thread scheduler (part of the OS) decides when to allocate CPU time to the thread.
+//
+//Example:
+//
+//java
+//Copy
+//t1.start(); // t1 is now in the RUNNABLE state
+//3. RUNNING State
+//When the thread scheduler assigns CPU time to the thread, it transitions to the RUNNING state.
+//
+//In this state:
+//
+//The thread is actively executing its run() method.
+//
+//The CPU scheduler is responsible for managing the thread's execution on the CPU.
+//
+//Example:
+//
+//java
+//Copy
+//// Inside the run() method:
+//public void run() {
+//    System.out.println("Thread running"); // Thread is in the RUNNING state
+//}
+//4. BLOCKED/WAITING/TIMED_WAITING States
+//A thread can temporarily stop executing and enter one of these states:
+//
+//BLOCKED: The thread is waiting to acquire a lock (e.g., for a synchronized block or ReentrantLock).
+//
+//WAITING: The thread is waiting indefinitely for another thread to perform a specific action (e.g., Object.wait() or Thread.join()).
+//
+//TIMED_WAITING: The thread is waiting for a specified amount of time (e.g., Thread.sleep(1000) or Object.wait(1000)).
+//
+//In these states:
+//
+//The thread is not consuming CPU time.
+//
+//The thread scheduler removes the thread from the CPU and places it in a waiting queue.
+//
+//Example:
+//
+//java
+//Copy
+//synchronized (lock) {
+//    lock.wait(); // Thread enters WAITING state
+//}
+//5. TERMINATED State
+//When the thread completes its run() method or is explicitly stopped, it enters the TERMINATED state.
+//
+//In this state:
+//
+//The thread is no longer alive and cannot be restarted.
+//
+//Its resources are cleaned up by the JVM.
+//
+//Example:
+//
+//java
+//Copy
+//// After the run() method completes:
+//System.out.println("Thread finished"); // Thread enters TERMINATED state
+//When Do the Thread Scheduler and CPU Scheduler Come into Play?
+//Thread Scheduler
+//The thread scheduler comes into play when:
+//
+//You call t1.start(): The thread is added to the scheduler's ready queue.
+//
+//The thread transitions between states (e.g., from RUNNABLE to RUNNING or from RUNNING to BLOCKED).
+//
+//The thread is waiting for CPU time (e.g., in the RUNNABLE state).
+//
+//CPU Scheduler
+//The CPU scheduler comes into play when:
+//
+//The thread is in the RUNNING state and actively executing on the CPU.
+//
+//The CPU scheduler decides how much time the thread gets on the CPU (time slicing).
+//
+//The thread is preempted (interrupted) to allow another thread to run.
+//
+//Visualization of the Thread Lifecycle
+//Copy
+//NEW
+//  ↓
+//RUNNABLE (ready to run, waiting for CPU time)
+//  ↓
+//RUNNING (actively executing on the CPU)
+//  ↓
+//BLOCKED/WAITING/TIMED_WAITING (temporarily paused)
+//  ↓
+//TERMINATED (thread is dead)
 
 
 
