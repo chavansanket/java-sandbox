@@ -1,0 +1,215 @@
+Notes on wait() Method in Java
+	1. What is wait()?
+		The wait() method is used to make a thread pause its execution and wait until another thread notifies it to wake up.
+		It is commonly used for thread synchronization, where one thread waits for another thread to complete a task or provide data.
+	2. Key Requirements for wait():
+		Monitor Lock: The wait() method must be called only when the thread holds the monitor lock for the object it is waiting on.
+		Synchronized Context: The wait() call must be inside a synchronized block or method that locks on the same object.
+	3. How wait() Works:
+		When wait() is called:
+			The thread releases the monitor lock (so other threads can use it).
+			The thread goes into a waiting state.
+			The thread remains in the waiting state until:
+				Another thread calls notify() or notifyAll() on the same object.
+				The thread is interrupted (e.g., via interrupt()).
+	4. Common Mistakes:
+		Calling wait() without synchronization:
+			wait(); // Throws IllegalMonitorStateException
+			This throws an IllegalMonitorStateException because the thread does not own the monitor lock.
+		Fixing it with synchronization:
+		synchronized (this) {
+		    wait(); // Correct usage
+		}
+	5. Key Methods for Thread Synchronization:
+		wait(): Pauses the current thread and releases the lock.
+		notify(): Wakes up a single thread waiting on the same object.
+		notifyAll(): Wakes up all threads waiting on the same object.
+	6. Example of Correct Usage:
+		synchronized (this) { // Acquire the monitor lock
+		    wait(); // Release the lock and wait
+		}
+		The synchronized block ensures the thread holds the lock before calling wait().
+	7. Why IllegalMonitorStateException Occurs:
+		The exception is thrown if wait() is called without holding the monitor lock.
+		Example:
+		wait(); // Throws IllegalMonitorStateException
+	8. Practical Example:
+		class MyThread extends Thread {
+		    @Override
+		    public void run() {
+		        synchronized (this) {
+		            System.out.println("Thread is waiting...");
+		            try {
+		                wait(); // Wait for notification
+		            } catch (InterruptedException e) {
+		                System.out.println("Thread was interrupted.");
+		            }
+		            System.out.println("Thread resumed.");
+		        }
+		    }
+		}
+		
+		public class Main {
+		    public static void main(String[] args) throws InterruptedException {
+		        MyThread t1 = new MyThread();
+		        t1.start();
+		
+		        Thread.sleep(2000); // Main thread sleeps for 2 seconds
+		
+		        synchronized (t1) {
+		            t1.notify(); // Notify the waiting thread
+		        }
+		
+		        System.out.println("Main thread finished.");
+		    }
+		}
+	9. Output of the Example:
+		Thread is waiting...
+		Main thread finished.
+		Thread resumed.
+	10. Key Points to Remember:
+		Always use wait() inside a synchronized block.
+		The object used for wait() and notify() must be the same.
+		wait() releases the lock, while notify() or notifyAll() wakes up waiting threads.
+		IllegalMonitorStateException occurs if wait() is called without synchronization.
+	11. When to Use wait() and notify():
+		Use wait() and notify() for thread coordination, such as:
+		Producer-consumer problems.
+		Threads waiting for a condition to be met.
+
+Summary:
+	wait() is used to pause a thread and release the lock.
+	It must be called inside a synchronized block.
+	Use notify() or notifyAll() to wake up waiting threads.
+	Always synchronize on the same object for wait() and notify().
+
+Let me know if you need further clarification! 😊
+
+give some notes on synchronized also ...and also tell why it is necessary to call wait() method inside synchronized context
+Absolutely! Let’s dive into synchronized and why it’s necessary to call the wait() method inside a synchronized context.
+
+Notes on synchronized
+	1. What is synchronized?
+		The synchronized keyword in Java is used to control access to shared resources by multiple threads.
+		It ensures that only one thread can execute a block of code or method at a time, preventing race conditions.
+
+	2. How synchronized Works:
+		When a thread enters a synchronized block or method, it acquires the monitor lock of the specified object.
+		Other threads attempting to enter the same synchronized block or method must wait until the lock is released.
+
+	3. Types of Synchronization:
+		Synchronized Block:
+			Synchronizes a block of code on a specific object.
+		
+		Example:
+		synchronized (object) {
+		    // Code to be executed by only one thread at a time
+		}
+		
+		Synchronized Method:
+		Synchronizes the entire method on the current object (this).
+		Example:
+		public synchronized void myMethod() {
+		    // Code to be executed by only one thread at a time
+		}
+
+	4. Why Use synchronized?
+		Thread Safety: Prevents multiple threads from accessing shared resources simultaneously, avoiding data corruption or inconsistent 				states.
+		Race Conditions: Ensures that only one thread can modify shared data at a time.
+
+	5. Example of synchronized:
+		class Counter {
+		    private int count = 0;
+		
+		    public synchronized void increment() {
+		        count++; // Only one thread can execute this at a time
+		    }
+		
+		    public int getCount() {
+		        return count;
+		    }
+		}
+		Without synchronized, multiple threads could increment count simultaneously, leading to incorrect results.
+
+Why wait() Must Be Called Inside a Synchronized Context
+	1. Monitor Lock Requirement:
+		The wait() method releases the monitor lock of the object it is called on.
+		To release the lock, the thread must own the lock in the first place.
+		This is why wait() must be called inside a synchronized block or method.
+	2. What Happens When wait() is Called?
+		The thread releases the monitor lock.
+		The thread goes into a waiting state.
+		The thread remains in the waiting state until:
+			Another thread calls notify() or notifyAll() on the same object.
+			The thread is interrupted (e.g., via interrupt()).
+	3. Why Synchronization is Necessary for wait():
+		Atomicity: The act of checking a condition and calling wait() must be atomic (i.e., happen as a single, uninterrupted operation). 				Synchronization ensures this.
+		Thread Safety: Without synchronization, another thread could modify the shared state between checking the condition and calling wait(), 			leading to race conditions.
+		Lock Ownership: wait() requires the thread to own the monitor lock. Synchronization ensures the thread owns the lock before calling wait().
+	4. Example of wait() in Synchronized Context:
+		synchronized (sharedObject) {
+		    while (conditionIsNotMet) {
+		        sharedObject.wait(); // Release the lock and wait
+		    }
+		    // Proceed when condition is met
+		}
+		The synchronized block ensures the thread owns the lock before calling wait().
+		The while loop ensures the thread rechecks the condition after waking up (to handle spurious wakeups).
+	5. What Happens Without Synchronization?
+		If wait() is called without synchronization:
+			The thread does not own the lock, so wait() throws an IllegalMonitorStateException.
+			There is no guarantee that the condition being waited on is still valid when the thread wakes up.
+
+Key Points to Remember:
+For synchronized:
+	Use synchronized to ensure thread safety and prevent race conditions.
+	Synchronized blocks or methods lock on an object’s monitor.
+	Only one thread can execute a synchronized block or method at a time.
+
+For wait():
+	wait() must be called inside a synchronized context.
+	wait() releases the lock and puts the thread into a waiting state.
+	Use notify() or notifyAll() to wake up waiting threads.
+	Always recheck the condition after waking up (use a while loop).
+
+Example: Producer-Consumer Problem
+	class SharedResource {
+	    private int data;
+	    private boolean available = false;
+	
+	    public synchronized void produce(int value) {
+	        while (available) {
+	            try {
+	                wait(); // Wait for consumer to consume
+	            } catch (InterruptedException e) {
+	                System.out.println("Producer interrupted");
+	            }
+	        }
+	        data = value;
+	        available = true;
+	        notifyAll(); // Notify consumers
+	    }
+	
+	    public synchronized int consume() {
+	        while (!available) {
+	            try {
+	                wait(); // Wait for producer to produce
+	            } catch (InterruptedException e) {
+	                System.out.println("Consumer interrupted");
+	            }
+	        }
+	        available = false;
+	        notifyAll(); // Notify producers
+	        return data;
+	    }
+	}
+	The produce() and consume() methods are synchronized to ensure thread safety.
+	wait() is used to pause the producer or consumer until the condition is met.
+	notifyAll() is used to wake up waiting threads.
+
+Summary:
+	synchronized ensures thread safety by allowing only one thread to execute a block or method at a time.
+	wait() must be called inside a synchronized context because it requires the thread to own the monitor lock.
+	Always use a while loop to recheck the condition after waking up from wait().
+
+

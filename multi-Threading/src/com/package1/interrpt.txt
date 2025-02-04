@@ -13,35 +13,34 @@ Why Use interrupt() Instead of stop()?
 		Prevents thread inconsistency and resource leaks.
 
 How to Use interrupt() Properly
-There are two main ways to handle thread interruption:
-Method 1: Check isInterrupted() in a Loop
-	class MyThread extends Thread {
-	    public void run() {
-	        while (!Thread.currentThread().isInterrupted()) {  // Check for interrupt
-	            System.out.println("Thread is running...");
-	        }
-	        System.out.println("Thread is stopping.");
-	    }
-	}
-	This method is useful for threads that perform repetitive tasks.
-	The thread stops when it detects the interrupt status.
-
-Method 2: Handle InterruptedException
-	class MyThread extends Thread {
-	    public void run() {
-	        try {
-	            while (!Thread.currentThread().isInterrupted()) {
-	                System.out.println("Thread is sleeping...");
-	                Thread.sleep(5000);  // Sleep can throw InterruptedException
-	            }
-	        } catch (InterruptedException e) {
-	            System.out.println("Thread stopping due to interrupt.");
-	            Thread.currentThread().interrupt();  // Restore the interrupt flag
-	        }
-	    }
-	}
-	This method is used when the thread is in a waiting state (e.g., sleep(), wait(), or join()).
-	The InterruptedException is caught, and the interrupt flag is restored using Thread.currentThread().interrupt().
+	There are two main ways to handle thread interruption:
+		Method 1: Check isInterrupted() in a Loop
+			class MyThread extends Thread {
+			    public void run() {
+			        while (!Thread.currentThread().isInterrupted()) {  // Check for interrupt
+			            System.out.println("Thread is running...");
+			        }
+			        System.out.println("Thread is stopping.");
+			    }
+			}
+			This method is useful for threads that perform repetitive tasks.
+			The thread stops when it detects the interrupt status.
+		Method 2: Handle InterruptedException
+			class MyThread extends Thread {
+			    public void run() {
+			        try {
+			            while (!Thread.currentThread().isInterrupted()) {
+			                System.out.println("Thread is sleeping...");
+			                Thread.sleep(5000);  // Sleep can throw InterruptedException
+			            }
+			        } catch (InterruptedException e) {
+			            System.out.println("Thread stopping due to interrupt.");
+			            Thread.currentThread().interrupt();  // Restore the interrupt flag
+			        }
+			    }
+			}
+			This method is used when the thread is in a waiting state (e.g., sleep(), wait(), or join()).
+			The InterruptedException is caught, and the interrupt flag is restored using Thread.currentThread().interrupt().
 
 Why Restore the Interrupt Flag in the Catch Block?
 	When an InterruptedException is thrown, the interrupt status flag is cleared.
@@ -50,93 +49,85 @@ Why Restore the Interrupt Flag in the Catch Block?
 		The thread can respond appropriately (e.g., by terminating gracefully).
 
 How Can a Thread Ignore interrupt()?
-A thread can ignore interrupt() in two scenarios:
-Never Checking isInterrupted():
-
-If the thread never checks the interrupt status, it will continue running indefinitely.
-Catching InterruptedException and Continuing Execution:
-If the thread catches InterruptedException but does not restore the interrupt flag or terminate, it will ignore the interruption.
-
-Example of Ignoring Interruption (Bad Practice ❌):
-class MyThread extends Thread {
-    public void run() {
-        try {
-            while (true) {
-                System.out.println("Thread is sleeping...");
-                Thread.sleep(5000);
-            }
-        } catch (InterruptedException e) {
-            System.out.println("Interrupt received, but ignoring...");
-        }
-    }
-}
-The thread continues running even after being interrupted.
-
-Fix (Good Practice ✅):
-
-Always check isInterrupted() or restore the interrupt flag after catching InterruptedException.
+	A thread can ignore interrupt() in two scenarios:
+	1.Never Checking isInterrupted():
+		If the thread never checks the interrupt status, it will continue running indefinitely.
+	2.Catching InterruptedException and Continuing Execution:
+		If the thread catches InterruptedException but does not restore the interrupt flag or terminate, it will ignore the interruption.
+	Example of Ignoring Interruption (Bad Practice ❌):
+	class MyThread extends Thread {
+	    public void run() {
+	        try {
+	            while (true) {
+	                System.out.println("Thread is sleeping...");
+	                Thread.sleep(5000);
+	            }
+	        } catch (InterruptedException e) {
+	            System.out.println("Interrupt received, but ignoring...");
+	        }
+	    }
+	}
+	The thread continues running even after being interrupted.
+	Fix (Good Practice ✅):
+	Always check isInterrupted() or restore the interrupt flag after catching InterruptedException.
 
 When Should a Thread Keep Running After interrupt()?
-In some cases, a thread should not stop immediately after being interrupted. For example:
+	In some cases, a thread should not stop immediately after being interrupted. For example:
+		Critical Work: The thread must complete a critical task (e.g., finishing a database transaction).
+		Background Services: The thread should not stop unless explicitly told (e.g., a logging thread).
+		Cleanup: The thread needs to perform cleanup (e.g., closing file connections) before stopping.
+	
+		Example: Completing Work Before Stopping:
+		class ImportantTask extends Thread {
+		    public void run() {
+		        for (int i = 1; i <= 5; i++) {
+		            if (Thread.currentThread().isInterrupted()) {
+		                System.out.println("Interrupt received, but finishing work...");
+		            }
+		            System.out.println("Processing step " + i);
+		        }
+		        System.out.println("Task finished safely.");
+		    }
+		}
+		The thread completes its task before stopping, ensuring no data is lost or corrupted.
+		More Details: 
+			In your code, the if statement (Thread.currentThread().isInterrupted()) executes repeatedly because the interrupted status of the 				thread is not cleared after the interrupt. When a thread is interrupted using interrupt(), its interrupted status is set to 					true, and isInterrupted() checks this status without clearing it. As a result, the condition remains true for all subsequent 				iterations, causing the if block to execute repeatedly.
+			Fix:
+				Use Thread.interrupted() instead of Thread.currentThread().isInterrupted(). This method checks the interrupted status and 						clears it, ensuring the if block executes only once.
 
-Critical Work: The thread must complete a critical task (e.g., finishing a database transaction).
-
-Background Services: The thread should not stop unless explicitly told (e.g., a logging thread).
-
-Cleanup: The thread needs to perform cleanup (e.g., closing file connections) before stopping.
-
-Example: Completing Work Before Stopping:
-
-java
-Copy
-class ImportantTask extends Thread {
-    public void run() {
-        for (int i = 1; i <= 5; i++) {
-            if (Thread.currentThread().isInterrupted()) {
-                System.out.println("Interrupt received, but finishing work...");
-            }
-            System.out.println("Processing step " + i);
-        }
-        System.out.println("Task finished safely.");
-    }
-}
-The thread completes its task before stopping, ensuring no data is lost or corrupted.
+			Modified Code:
+				if (Thread.interrupted()) { // Clears the status
+				    System.out.println("Interrupt received, but finishing work...");
+				    break; // Optional: Stop processing after interrupt
+				}
+			Key Takeaway:
+				isInterrupted(): Checks status without clearing it.
+				interrupted(): Checks status and clears it.
+				Use interrupted() if you want to handle the interrupt only once.
 
 Final Summary: Key Points to Remember
-Concept	Explanation
-What does interrupt() do?	Sends a signal to a thread to stop. Does NOT stop it immediately.
-How to stop a thread?	Use isInterrupted() or handle InterruptedException.
-How can a thread ignore interrupt()?	If it never checks isInterrupted() or catches InterruptedException and continues.
-Why let a thread keep running?	If it must finish a critical task before stopping.
-Why use interrupt() instead of stop()?	stop() is unsafe; interrupt() allows proper cleanup.
-Suggestions for Improvement
-Add a Note on notify() and interrupt():
+	Concept									Explanation
+	What does interrupt() do?				Sends a signal to a thread to stop. Does NOT stop it immediately.
+	How to stop a thread?					Use isInterrupted() or handle InterruptedException.
+	How can a thread ignore interrupt()?	If it never checks isInterrupted() or catches InterruptedException and continues.
+	Why let a thread keep running?			If it must finish a critical task before stopping.
+	Why use interrupt() instead of stop()?	stop() is unsafe; interrupt() allows proper cleanup.
+	
+Additional Points:
+	Note on notify() and interrupt():
+		When a thread is interrupted while waiting (e.g., in wait()), it is woken up, but the notify() or notifyAll() mechanism is not triggered. This distinction is important for understanding thread coordination.
+	Clarify the Difference Between interrupt() and stop():
+		Emphasize that stop() forcibly terminates the thread, which can lead to resource leaks and inconsistent states, whereas interrupt() is a cooperative mechanism.
+	Add a Real-World Analogy:	
+		Compare interrupt() to a polite request (e.g., "Please stop when you can") and stop() to a forced shutdown (e.g., "Stop right now, no matter what").
+	Include a Warning About Busy-Waiting:
+		If a thread is in a busy-wait loop (e.g., while (true) without sleep() or wait()), it may not respond to interrupt() unless it explicitly checks isInterrupted().
 
-When a thread is interrupted while waiting (e.g., in wait()), it is woken up, but the notify() or notifyAll() mechanism is not triggered. This distinction is important for understanding thread coordination.
-
-Clarify the Difference Between interrupt() and stop():
-
-Emphasize that stop() forcibly terminates the thread, which can lead to resource leaks and inconsistent states, whereas interrupt() is a cooperative mechanism.
-
-Add a Real-World Analogy:
-
-Compare interrupt() to a polite request (e.g., "Please stop when you can") and stop() to a forced shutdown (e.g., "Stop right now, no matter what").
-
-Include a Warning About Busy-Waiting:
-
-If a thread is in a busy-wait loop (e.g., while (true) without sleep() or wait()), it may not respond to interrupt() unless it explicitly checks isInterrupted().
-
-Updated Best Practices
-Always Handle interrupt() Gracefully:
-
-Check isInterrupted() in loops or long-running tasks.
-
-Catch InterruptedException and restore the interrupt flag using Thread.currentThread().interrupt().
-
-Avoid Using stop():
-
-It is deprecated and unsafe. Use interrupt() for graceful thread termination.
-
-Design Threads to Respond to Interruptions:
-
-Ensure threads can detect and respond to interruptions, especially in long-running or blocking operations.
+Updated Best Practices:
+	1. Always Handle interrupt() Gracefully:
+		Check isInterrupted() in loops or long-running tasks.
+		Catch InterruptedException and restore the interrupt flag using Thread.currentThread().interrupt().
+	2. Avoid Using stop():
+		It is deprecated and unsafe. Use interrupt() for graceful thread termination.
+	3. Design Threads to Respond to Interruptions:
+		Ensure threads can detect and respond to interruptions, especially in long-running or blocking operations.

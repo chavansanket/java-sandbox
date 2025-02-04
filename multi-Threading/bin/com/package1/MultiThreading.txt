@@ -90,20 +90,6 @@ When Should a Thread Keep Running After interrupt()?
 		    }
 		}
 		The thread completes its task before stopping, ensuring no data is lost or corrupted.
-		More Details: 
-			In your code, the if statement (Thread.currentThread().isInterrupted()) executes repeatedly because the interrupted status of the 				thread is not cleared after the interrupt. When a thread is interrupted using interrupt(), its interrupted status is set to 					true, and isInterrupted() checks this status without clearing it. As a result, the condition remains true for all subsequent 				iterations, causing the if block to execute repeatedly.
-			Fix:
-				Use Thread.interrupted() instead of Thread.currentThread().isInterrupted(). This method checks the interrupted status and 						clears it, ensuring the if block executes only once.
-
-			Modified Code:
-				if (Thread.interrupted()) { // Clears the status
-				    System.out.println("Interrupt received, but finishing work...");
-				    break; // Optional: Stop processing after interrupt
-				}
-			Key Takeaway:
-				isInterrupted(): Checks status without clearing it.
-				interrupted(): Checks status and clears it.
-				Use interrupted() if you want to handle the interrupt only once.
 
 Final Summary: Key Points to Remember
 	Concept									Explanation

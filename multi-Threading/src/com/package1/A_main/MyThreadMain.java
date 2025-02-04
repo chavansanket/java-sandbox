@@ -8,34 +8,77 @@ public class MyThreadMain extends Thread {
 
 	@Override
 	public void run() {
-		for (int i = 0; i < 200; i++) {
-			System.out.println(Thread.currentThread().getName() + " is running.");
-
+		try {
+			System.out.println("Current Thread "+ Thread.currentThread().getName()+ " before waiting");
+			wait();
+			System.out.println("Current Thread "+ Thread.currentThread().getName());
+		} catch (InterruptedException e) {
+			System.out.println(" wait state is ended ");
+		} catch (Exception e) {
+			System.out.println(e);
 		}
-
 	}
 
+		
+//		try {
+//			Thread.sleep(3000);	
+//		}catch (InterruptedException e) {
+//			System.out.println("Interrupted Exception occurred: "+ e);
+//			System.out.println("Thread is stopping.... "+ Thread.currentThread().getName());
+//		}
+		
+//		try {
+//			for(int i= 0; i<5;i++) {
+//				if(currentThread().isInterrupted()) {
+//				}
+//				System.out.println("I am doing work "+i + " ,is interrupted: "+ currentThread().isInterrupted());
+//				Thread.sleep(100);
+//			}
+//		} 
+//		catch (InterruptedException e) {
+//			System.out.println("Exception occurred: "+e+" ,Thread is stopping.... "+ Thread.currentThread().getName()+  " ,is interrupted: "+ currentThread().isInterrupted());
+//			Thread.currentThread().interrupt(); //restoring interrupt state
+//			System.out.println("Thread is interrupted: "+ Thread.currentThread().isInterrupted());
+//		}	
+
 	public static void main(String[] args) {
+		System.out.println(Thread.currentThread().getName() +" current");
 		MyThreadMain t1 = new MyThreadMain("Thread-1");
 //		MyThread t2 = new MyThread("Thread-2");
 //		t1.setDaemon(true);
 
 		t1.start();
-
-		try {
-			t1.join();
-		} catch (Exception e) {
-
-		}
+		System.out.println(Thread.currentThread().getName() +" current");
+//		try {
+////			t1.join();
+//			Thread.sleep(1000);
+//			t1.interrupt();
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			
+//		}finally {
+//			
+//		}
 		System.out.println("hi");
 
 	}
 
 }
 
-//t1.join(); //Waits for this thread to die. (i.e. wait un-till t1 thread execution is not getting finished).
+//t1.join(); //Waits for this thread to die. (i.e. wait until t1 thread execution is not getting finished).
 
-//Thread.yeild() //jo dusre thread h, unko bhi chance dena h,(ye sirf hint deta h, jaroori nhi h, aisa hi ho)
+//Thread.yield() 
+	//The Thread.yield() method is a hint to the thread scheduler that the current thread is willing to yield its current use of the CPU, 
+		//allowing other threads of the same or higher priority to execute. 
+	//However, this is just a suggestion, and the thread scheduler is free to ignore it. 
+	//It does not guarantee that the current thread will immediately stop executing or that another thread will start executing.
+	
+	//When to Use Thread.yield():
+		//In scenarios where you want to improve fairness among threads.
+		//In busy-waiting or polling loops to reduce CPU usage.
+		//When a thread is performing a low-priority task and wants to give higher-priority threads a chance to run.
+	//]Thread.yield() is rarely used in real-world applications because modern thread schedulers are efficient, and explicit yielding is often unnecessary.
+
 //User Thread //wo thread jisse aap kam karwa rhe ho(business logic)
 //Daemon Thread //background thread; ex.GC thread; JVM will not wait for complete this thread execution; //t1.setDaemon(true) ...to make thread as daemon
 
@@ -43,18 +86,20 @@ public class MyThreadMain extends Thread {
 //In multithreading, multiple threads may access shared resources simultaneously, causing race conditions (inconsistent data).
 //🔹 The synchronized keyword is used to prevent multiple threads from accessing critical sections at the same time.
 // lock is applied by thread which is accessing shared resource
-//when t1 is accessing shared resource, t1 will not leave resource untill execution of shared resource(including Thread.sleep() of shared resource)
+//when t1 is accessing shared resource, t1 will not leave resource until execution of shared resource(including Thread.sleep() of shared resource)
 //when threads are running concurrently, due to relative timing between them, result is becoming unpredictable and here we are not using synchronized, this condition is called as a race condition and to avoid race condition we use 'synchronized'
 //applied at critical section (resource is shared between thread ex.increament method of Counter class, is shared between two threads)
 //we can make to a function or to a block of code 
-//mutual exclusion : it ensures multiple thread will not access shared resource at same time (means at a time only one thread is accessing shared resource)
+//mutual exclusion : it ensures multiple thread will not access shared resource at same time (means at a time only one thread is 
+	//accessing shared resource)
 //✅ Use Synchronized Method if the entire method needs thread safety.
 //✅ Use Synchronized Block if only part of the code needs synchronization (better performance).
 
 //lock
-//drawback of first type of lock(which comes with synchronized keyword). thread two is waiting for indefinitely time, so use second type of lock i.e.manual lock(explicit lock)
-//lock.lock();....thread will waits untill lock will get,(it is similar to synchronized)
-//lock.tryLock() and lock.tryLock(time,timeunit) will not wait untill lock is getting.
+//drawback of first type of lock(which comes with synchronized keyword). thread two is waiting for indefinitely time, 
+	//so use second type of lock i.e.manual lock(explicit lock)
+//lock.lock();....thread will waits until lock will get,(it is similar to synchronized)
+//lock.tryLock() and lock.tryLock(time,timeunit) will not wait until lock is getting.
 
 //Reentrant Class
 //Reentrant Lock (Reentrant Class) in Java
@@ -74,12 +119,12 @@ public class MyThreadMain extends Thread {
 //synchronized method or block : means this method will acquire intrinsic lock of the object the method belongs to(means who called this synchronized method)
 
 //deadlock
-//lock ko acquire krne ki ordering consistent krde(ex. pehle pen lao then get go for paper; by introducing synchronized block with pen as arg in thread 2 task) then we can resolve deadlock
+//How to prevent?->lock ko acquire krne ki ordering consistent krde(ex. pehle pen lao then get go for paper; by introducing synchronized block with pen as arg in thread 2 task) then we can resolve deadlock
 
 //ThreadCommunicaion
-//notify(),notifyAll(),wait() these methods were introduced for thread communication
+//wait(), notify(), notifyAll() these methods were introduced for thread communication
 //these methods are called within synchronized context
-//wait() method : tells to current thread that release the lock and wait until another thread call notify or notifyAll()
+//wait() method : tells to current thread that release the lock and wait until another thread call notify() or notifyAll()
 //notify() and notifyAll() wakes up single and all waiting threads
 
 
