@@ -213,3 +213,33 @@ Summary:
 	Always use a while loop to recheck the condition after waking up from wait().
 
 
+//Incorrect Code (wait())
+	@Override
+	public void run() {
+		for(int i=1; i<=10; i++) {
+			resource.produce(i);
+			try {
+				wait(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	Reason:
+		The wait() method must be called inside a synchronized context because it requires the thread to hold the monitor lock of the object it 			is waiting on. If you call wait() without synchronization, it throws an IllegalMonitorStateException.
+	
+Key Points:
+	wait() vs sleep():
+		Use wait() for thread synchronization (requires synchronization).
+		Use sleep() for pausing a thread (does not require synchronization).
+	Synchronization:
+		Always call wait() inside a synchronized block or method.
+		Synchronize on the same object used for wait() and notify().
+	Thread Safety:
+	Ensure shared resources (like data and hasData) are accessed in a thread-safe manner using synchronized.
+
+Summary:
+	Replace wait(1000) with Thread.sleep(1000) if you just want to pause the thread.
+	If you want to use wait(), synchronize on the resource object.
+	Always ensure wait() is called inside a synchronized context to avoid IllegalMonitorStateException.
+
